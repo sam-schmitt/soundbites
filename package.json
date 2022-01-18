@@ -60,5 +60,12 @@
 	},
 	"browser": {
 		"fs": "false"
+	},
+	"build": {
+		"appId": "net.samschmitt.app",
+		"productName": "SoundBites",
+		"files": [
+			"build/*"
+		]
 	}
 }

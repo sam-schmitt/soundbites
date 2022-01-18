@@ -5,9 +5,15 @@ import {
 	TextField,
 	Typography,
 	Container,
+	ThemeProvider,
+	IconButton,
 } from "@material-ui/core";
 import { useState, useEffect } from "react";
 import Check from "@material-ui/icons/Check";
+import Play from "@material-ui/icons/PlayArrow";
+
+import themeStyle from "./styles/theme.style";
+import MuiTheme from "./styles/mui";
 
 const fs = window.require("fs");
 const dataurl = window.require("dataurl");
@@ -32,12 +38,18 @@ const useStyles = makeStyles({
 	},
 	card: {
 		display: "flex",
-		flexDirection: "column",
 		alightItems: "center",
-		justifyContent: "center",
-		margin: "20px auto",
+		height: "100%",
+		width: "95%",
+		margin: "10px auto",
 		padding: 5,
 		backgroundColor: "#F2F2F2",
+	},
+	cardText: {
+		display: "flex",
+		alightItems: "center",
+		alignSelf: "center",
+		height: "100%",
 	},
 	header: {
 		display: "flex",
@@ -50,6 +62,8 @@ const useStyles = makeStyles({
 
 function App() {
 	const [path, setPath] = useState("/Users");
+	const { theme } = MuiTheme();
+
 	const styles = useStyles();
 	const [files, setFiles] = useState([]);
 	async function filesStructure(path) {
@@ -132,80 +146,83 @@ function App() {
 	}, []);
 
 	return (
-		<Container>
-			<Typography variant='h6'>Path: {path}</Typography>
+		<ThemeProvider theme={theme}>
+			<Container className={styles.container}>
+				<Typography variant='h6'>Path: {path}</Typography>
 
-			<Card className={styles.header}>
-				<Button
-					onClick={() => {
-						setChangingPath(!changingPath);
-					}}
-					variant='contained'
-					color='primary'
-				>
-					Change Path
-				</Button>
-
-				{changingPath && (
-					<TextField
-						label={"Set Path"}
-						color={"primary"}
-						variant={"filled"}
-						onChange={(e) => {
-							setTempPath(e.target.value);
+				<Card className={styles.header}>
+					<Button
+						onClick={() => {
+							setChangingPath(!changingPath);
 						}}
-						value={tempPath}
-						InputProps={{
-							className: "input",
-							endAdornment: (
-								<Button
-									color='primary'
-									variant='contained'
-									onClick={() => {
-										setStorage();
+						variant='outlined'
+						color='primary'
+					>
+						Change Path
+					</Button>
 
-										setChangingPath(false);
-									}}
-								>
-									<Check />
-								</Button>
-							),
-						}}
-					/>
-				)}
-				{filteredFiles.length > 0 && (
-					<TextField
-						label={"Search files..."}
-						color={"primary"}
-						variant={"filled"}
-						onChange={(e) => {
-							searchFilterFunction(e.target.value);
-						}}
-						value={fileName}
-					/>
-				)}
-			</Card>
+					{changingPath && (
+						<TextField
+							label={"Set Path"}
+							variant={"filled"}
+							onChange={(e) => {
+								setTempPath(e.target.value);
+							}}
+							value={tempPath}
+							InputProps={{
+								className: "input",
+								endAdornment: (
+									<Button
+										variant='contained'
+										onClick={() => {
+											setStorage();
 
-			{filteredFiles.map(function (item, index) {
-				return (
-					<>
-						{item.name.slice(item.name.length - 4, item.name.length) ===
-							".mp3" && (
-							<Card className={styles.card}>
-								<Typography>{item.name}</Typography>
-								<Button
-									onClick={() => {
-										play(item.name);
-									}}
-								>
-									Play Bite
-								</Button>
-							</Card>
-						)}
-					</>
-				);
-			})}
-		</Container>
+											setChangingPath(false);
+										}}
+									>
+										<Check />
+									</Button>
+								),
+							}}
+						/>
+					)}
+					{filteredFiles.length > 0 && (
+						<TextField
+							label={"Search files..."}
+							color={"primary"}
+							variant={"filled"}
+							onChange={(e) => {
+								searchFilterFunction(e.target.value);
+							}}
+							value={fileName}
+						/>
+					)}
+				</Card>
+
+				{filteredFiles.map(function (item, index) {
+					return (
+						<>
+							{item.name.slice(item.name.length - 4, item.name.length) ===
+								".mp3" && (
+								<Card className={styles.card}>
+									<IconButton
+										onClick={() => {
+											play(item.name);
+										}}
+										variant='contained'
+									>
+										<Play />
+									</IconButton>
+									<Typography className={styles.cardText}>
+										{item.name}
+									</Typography>
+								</Card>
+							)}
+						</>
+					);
+				})}
+			</Container>
+		</ThemeProvider>
 	);
 }
 
