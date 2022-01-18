@@ -52,33 +52,27 @@ function App() {
 	const [path, setPath] = useState("/Users");
 	const styles = useStyles();
 	const [files, setFiles] = useState([]);
-	async function filesStructure() {
-		await setPath(tempPath);
-
-		await setFiles(
-			await fs
-				.readdirSync(path)
-				.map((file) => {
-					const stats = fs.statSync(pathModule.join(path, file));
-					return {
-						name: file,
-						size: stats.isFile() ? formatSize(stats.size ?? 0) : null,
-						directory: stats.isDirectory(),
-					};
-				})
-				.sort((a, b) => {
-					if (a.directory === b.directory) {
-						return a.name.localeCompare(b.name);
-					}
-					return a.directory ? -1 : 1;
-				})
-		);
+	async function filesStructure(path) {
+		let tempFiles = await fs
+			.readdirSync(path)
+			.map((file) => {
+				const stats = fs.statSync(pathModule.join(path, file));
+				return {
+					name: file,
+					size: stats.isFile() ? formatSize(stats.size ?? 0) : null,
+					directory: stats.isDirectory(),
+				};
+			})
+			.sort((a, b) => {
+				if (a.directory === b.directory) {
+					return a.name.localeCompare(b.name);
+				}
+				return a.directory ? -1 : 1;
+			});
+		console.log(tempFiles);
+		await setFiles(tempFiles);
+		await setFilteredFiles(tempFiles);
 	}
-
-	useEffect(() => {
-		setFilteredFiles(files);
-	}, [files]);
-
 	const convertSong = (filePath) => {
 		const songPromise = new Promise((resolve, reject) => {
 			fs.readFile(filePath, (err, data) => {
@@ -95,7 +89,6 @@ function App() {
 
 	const play = async (string) => {
 		player.pause();
-
 		let audio = await convertSong(`${path}/${string}`);
 		player = new Audio(audio);
 		player.currentTime = 0;
@@ -119,26 +112,29 @@ function App() {
 		}
 	};
 	const [changingPath, setChangingPath] = useState(false);
-	const [saved, setSaved] = useState(true);
-
 	const [tempPath, setTempPath] = useState("");
+
+	async function getStorage() {
+		let storedPath = await localStorage.getItem("path");
+		setPath(storedPath);
+		filesStructure(storedPath);
+	}
+
+	async function setStorage() {
+		await localStorage.setItem("path", tempPath);
+		await setPath(tempPath);
+		filesStructure(tempPath);
+		setChangingPath(false);
+	}
+
+	useEffect(() => {
+		getStorage();
+	}, []);
 
 	return (
 		<Container>
 			<Typography variant='h6'>Path: {path}</Typography>
-			{!saved && (
-				<Button
-					color='primary'
-					variant='contained'
-					onClick={() => {
-						filesStructure();
-						setChangingPath(false);
-						setSaved(true);
-					}}
-				>
-					Save
-				</Button>
-			)}
+
 			<Card className={styles.header}>
 				<Button
 					onClick={() => {
@@ -166,8 +162,8 @@ function App() {
 									color='primary'
 									variant='contained'
 									onClick={() => {
-										filesStructure();
-										setSaved(false);
+										setStorage();
+
 										setChangingPath(false);
 									}}
 								>
@@ -193,7 +189,6 @@ function App() {
 			{filteredFiles.map(function (item, index) {
 				return (
 					<>
-						{" "}
 						{item.name.slice(item.name.length - 4, item.name.length) ===
 							".mp3" && (
 							<Card className={styles.card}>
