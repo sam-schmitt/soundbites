@@ -1,110 +1,64 @@
-import "./App.css";
-import { useState } from "react";
-import {
-	Card,
-	Container,
-	FormControl,
-	makeStyles,
-	TextField,
-	Typography,
-} from "@material-ui/core";
+import { useState, useMemo } from "react";
+import { FilesViewer } from "./components/filesViewer";
 
-const useStyles = makeStyles({
-	container: {
-		display: "flex",
-		flexDirection: "column",
-		alightItems: "center",
-		justifyContent: "center",
-		padding: 5,
-	},
-	card: {
-		display: "flex",
-		flexDirection: "column",
-		alightItems: "center",
-		justifyContent: "center",
-		margin: "20px auto",
-		padding: 5,
-		backgroundColor: "#F2F2F2",
-	},
-});
+const fs = window.require("fs");
+const pathModule = window.require("path");
+
+const { app } = window.require("electron");
+
+const formatSize = (size) => {
+	var i = Math.floor(Math.log(size) / Math.log(1024));
+	return (
+		(size / Math.pow(1024, i)).toFixed(2) * 1 +
+		" " +
+		["B", "kB", "MB", "GB", "TB"][i]
+	);
+};
 
 function App() {
-	const styles = useStyles();
-	async function fileToDataURL(file) {
-		var reader = new FileReader();
-		return {
-			file: await new Promise(function (resolve, reject) {
-				reader.onload = function (event) {
-					resolve(event.target.result);
-				};
-				reader.readAsDataURL(file);
-			}),
-			name: file.name,
-		};
-	}
+	const [path, setPath] = useState("/Users");
 
-	function getDataURLs(target) {
-		return Promise.all([...target.files].map(fileToDataURL));
-	}
-	const upload = async (e) => {
-		let newFiles = await getDataURLs(e.target);
-		setFilteredFiles(newFiles);
-		setFiles(newFiles);
-	};
-	const [files, setFiles] = useState([]);
-	const [filteredFiles, setFilteredFiles] = useState([]);
-	const [fileName, setFileName] = useState([]);
+	const files = useMemo(
+		() =>
+			fs
+				.readdirSync(path)
+				.map((file) => {
+					const stats = fs.statSync(pathModule.join(path, file));
+					return {
+						name: file,
+						size: stats.isFile() ? formatSize(stats.size ?? 0) : null,
+						directory: stats.isDirectory(),
+					};
+				})
+				.sort((a, b) => {
+					if (a.directory === b.directory) {
+						return a.name.localeCompare(b.name);
+					}
+					return a.directory ? -1 : 1;
+				}),
+		[path]
+	);
 
-	const searchFilterFunction = async (text) => {
-		if (text) {
-			const newData = files.filter(function (item) {
-				const itemData = item.name ? item.name.toUpperCase() : "".toUpperCase();
-				const textData = text.toUpperCase();
-				return itemData.indexOf(textData) > -1;
-			});
-			setFilteredFiles(newData);
-			setFileName(text);
-		} else if (text == "") {
-			setFileName("");
-			setFilteredFiles(files);
-		}
-	};
+	const onBack = () => setPath(pathModule.dirname(path));
+	const onOpen = (folder) => setPath(pathModule.join(path, folder));
+
+	const [searchString, setSearchString] = useState("");
+	const filteredFiles = files.filter((s) => s.name.startsWith(searchString));
+
 	return (
-		<Container maxWidth='md' className={styles.container}>
-			<Typography variant='h1'>SoundBites</Typography>
-			<FormControl>
+		<div className='container mt-2'>
+			<h1>Hey</h1>
+			<h4>{path}</h4>
+			<div className='form-group mt-4 mb-2'>
 				<input
-					type='file'
-					multiple
-					onChange={(e) => {
-						upload(e);
-					}}
+					value={searchString}
+					onChange={(event) => setSearchString(event.target.value)}
+					className='form-control form-control-sm'
+					placeholder='File search'
 				/>
-				{files.length > 1 && (
-					<TextField
-						label={"Day title..."}
-						color={"primary"}
-						variant={"filled"}
-						onChange={(e) => {
-							searchFilterFunction(e.target.value);
-						}}
-						value={fileName}
-					/>
-				)}
-			</FormControl>
-
-			{filteredFiles.map(function (item, index) {
-				return (
-					<Card className={styles.card}>
-						<Typography>{item.name}</Typography>
-						<audio controls>
-							<source src={item.file} type='audio/mpeg' />
-							Your browser does not support the audio tag.
-						</audio>
-					</Card>
-				);
-			})}
-		</Container>
+			</div>
+			<FilesViewer files={filteredFiles} onBack={onBack} onOpen={onOpen} />
+		</div>
 	);
 }
 
