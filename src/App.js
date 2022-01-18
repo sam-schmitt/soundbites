@@ -1,6 +1,4 @@
-import logo from "./logo.svg";
 import "./App.css";
-import Audio from "./assets/audio/START SCREEN.mp3";
 import { useState } from "react";
 import {
 	Card,
