@@ -66,6 +66,9 @@
 		"productName": "SoundBites",
 		"files": [
 			"build/*"
-		]
+		],
+		"mac": {
+			"icon": "./build/icon.png"
+		}
 	}
 }

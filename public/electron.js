@@ -6,6 +6,7 @@ const iconPath = path.join(__dirname, "build", "icon.png");
 
 function createWindow() {
 	const win = new BrowserWindow({
+		icon: iconPath,
 		width: 800,
 		height: 600,
 		webPreferences: {
