@@ -186,7 +186,7 @@ function App() {
 							}}
 						/>
 					)}
-					{filteredFiles.length > 0 && (
+					{files.length > 0 && (
 						<TextField
 							label={"Search files..."}
 							color={"primary"}
