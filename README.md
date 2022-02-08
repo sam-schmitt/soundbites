@@ -9,7 +9,8 @@
 
  `npm install`
  `npm run electron.build`
+ `npm run dist-all`
 
-3. After completed, download using .dmg file in dist folder.
+3. After completed, download using dist folder.
 
 
